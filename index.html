@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>발명품 움직이기 공방</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap">
+<style>
+/* 레이아웃: 모눈 발명 노트 한 장 — ① 찍기 → ② 움직일 부분 고르기 → ③ 소개 → ④ GIF 만들기 */
+:root{
+  --paper:#fbfcf7;
+  --grid:#dfe8ef;
+  --ink:#24323d;
+  --soft:#5d6f7c;
+  --blue:#2f6fd6;
+  --blue-deep:#1f4f9e;
+  --crayon:#f2b62b;
+  --red:#d9473a;
+  --card:#ffffff;
+  --line:#c9d6df;
+  --display:"Jua","Gowun Dodum","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --body:"Gowun Dodum","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{
+  background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;
+  color:var(--ink);font-family:var(--body);font-size:18px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:24px 48px;
+}
+.wrap{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+header{display:flex;flex-direction:column;gap:4px}
+.eyebrow{font-family:var(--display);color:var(--blue);letter-spacing:.08em;font-size:16px}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(32px,7vw,44px);line-height:1.2;margin:0;text-wrap:balance}
+h1 .mark{background:linear-gradient(transparent 58%,var(--crayon) 58%,var(--crayon) 88%,transparent 88%)}
+.lead{margin:0;color:var(--soft)}
+
+.step{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.step h2{font-family:var(--display);font-weight:400;font-size:24px;margin:0;display:flex;align-items:center;gap:10px}
+.num{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--crayon);color:var(--ink);font-size:20px;flex:none}
+.hint{margin:0;color:var(--soft);font-size:16px}
+.locked{opacity:.45;pointer-events:none}
+
+.btn{appearance:none;border:0;border-radius:14px;font-family:var(--display);font-size:22px;padding:14px 20px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:60px;text-decoration:none;color:var(--ink)}
+.btn:focus-visible{outline:4px solid var(--crayon);outline-offset:3px}
+.btn-main{background:var(--blue);color:#fff;box-shadow:0 5px 0 var(--blue-deep)}
+.btn-main:active{transform:translateY(3px);box-shadow:0 2px 0 var(--blue-deep)}
+.btn-main:disabled{background:#9fb4d4;box-shadow:none;cursor:not-allowed}
+.btn-sub{background:var(--paper);border:2px solid var(--line)}
+.row{display:flex;flex-wrap:wrap;gap:12px}
+.row .btn{flex:1 1 170px}
+.big{width:100%;font-size:26px;min-height:72px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* 그림판 */
+.stage{position:relative;border:3px dashed var(--line);border-radius:14px;overflow:hidden;background:var(--paper);display:grid;place-items:center;min-height:220px}
+.stage canvas{display:block;width:100%;height:auto;touch-action:none;cursor:crosshair}
+.stage .empty{text-align:center;color:var(--soft);padding:24px;display:flex;flex-direction:column;gap:6px;align-items:center}
+.stage .empty b{font-family:var(--display);font-weight:400;font-size:22px;color:var(--ink)}
+.drawing-tip{position:absolute;left:10px;top:10px;background:rgba(255,255,255,.92);border:2px solid var(--line);border-radius:10px;padding:4px 10px;font-size:15px;pointer-events:none}
+
+/* 움직임 고르기 */
+.picker{border:3px solid var(--crayon);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px;background:#fffaf0}
+.picker p{margin:0;font-family:var(--display);font-size:21px}
+.moves{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:460px){.moves{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.move{appearance:none;border:2px solid var(--line);background:var(--card);border-radius:14px;padding:10px 6px;font-family:var(--display);font-size:19px;color:var(--ink);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:84px;justify-content:center}
+.move span{font-size:30px;line-height:1}
+.move:hover{border-color:var(--blue)}
+.move:focus-visible{outline:3px solid var(--crayon)}
+
+/* 부분 목록 */
+.parts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.parts li{display:flex;align-items:center;gap:10px;border:2px solid var(--line);border-radius:12px;padding:8px 10px;background:var(--paper)}
+.parts .dot{width:18px;height:18px;border-radius:50%;flex:none}
+.parts .what{flex:1;min-width:0;font-family:var(--display);font-size:19px}
+.parts button{appearance:none;border:0;background:transparent;font-size:22px;cursor:pointer;padding:4px 8px;border-radius:8px}
+.parts button:focus-visible{outline:3px solid var(--crayon)}
+
+.opt{display:flex;flex-direction:column;gap:8px}
+.opt .label{font-family:var(--display);font-size:19px}
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+.seg button{appearance:none;font:inherit;font-size:17px;border:2px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:6px 16px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.seg button:focus-visible{outline:3px solid var(--crayon)}
+
+label.lbl{font-family:var(--display);font-size:19px}
+input[type=text],textarea{width:100%;font:inherit;color:var(--ink);background:var(--paper);border:2px solid var(--line);border-radius:12px;padding:12px 14px}
+textarea{min-height:96px;resize:vertical;line-height:1.7}
+input[type=text]:focus,textarea:focus{outline:none;border-color:var(--blue)}
+.field{display:flex;flex-direction:column;gap:6px}
+
+.bar{width:100%;height:14px;border-radius:999px;background:var(--paper);border:2px solid var(--line);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--crayon);border-radius:999px;transition:width .2s}
+
+.result{align-items:center;text-align:center}
+.result img{max-width:100%;border-radius:12px;border:3px solid var(--ink);display:block;background:#fff}
+.result-title{font-family:var(--display);font-size:28px;margin:0}
+.result-desc{margin:0;color:var(--soft)}
+.result .row{width:100%}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <span class="eyebrow">2학년 발명가 교실</span>
+    <h1>내 <span class="mark">발명품</span>을 움직여요!</h1>
+    <p class="lead">그림을 찍고, 움직일 부분을 손가락으로 빙 둘러 그린 다음, 어떻게 움직일지 골라요.</p>
+  </header>
+
+  <!-- ① 찍기 -->
+  <section class="step" id="step1">
+    <h2><span class="num">1</span>발명품 그림 찍기</h2>
+    <p class="hint">그림이 화면에 꽉 차게, 그림자가 생기지 않게 찍어요.</p>
+    <input id="camera" class="sr" type="file" accept="image/*" capture="environment">
+    <input id="album" class="sr" type="file" accept="image/*">
+    <div class="row">
+      <button class="btn btn-main" id="btnCamera" type="button">📷 사진 찍기</button>
+      <button class="btn btn-sub" id="btnAlbum" type="button">🖼️ 앨범에서 고르기</button>
+    </div>
+  </section>
+
+  <!-- ② 부분 고르기 -->
+  <section class="step locked" id="step2">
+    <h2><span class="num">2</span>움직일 부분 고르기</h2>
+    <p class="hint">움직이고 싶은 부분을 <b>손가락으로 넉넉하게 빙 둘러 그려요.</b> 여러 군데를 고를 수 있어요.</p>
+    <div class="stage" id="stage">
+      <div class="empty" id="stageEmpty"><b>🖍️ 그림을 먼저 찍어요</b><span>사진을 찍으면 여기에 나와요</span></div>
+      <canvas id="view" hidden aria-label="내 발명품 그림. 손가락으로 움직일 부분을 둘러 그려요."></canvas>
+      <span class="drawing-tip" id="tip" hidden>✋ 빙 둘러 그려요</span>
+    </div>
+
+    <div class="picker" id="picker" hidden>
+      <p>이 부분은 어떻게 움직일까요?</p>
+      <div class="moves" id="moves">
+        <button class="move" type="button" data-move="spin"><span>🔄</span>빙글빙글</button>
+        <button class="move" type="button" data-move="wobble"><span>🎐</span>흔들흔들</button>
+        <button class="move" type="button" data-move="flicker"><span>🔥</span>활활 반짝</button>
+        <button class="move" type="button" data-move="bob"><span>⬆️</span>위아래로</button>
+        <button class="move" type="button" data-move="shake"><span>↔️</span>왔다갔다</button>
+        <button class="move" type="button" data-move="pulse"><span>💓</span>쿵쿵 커졌다</button>
+      </div>
+      <button class="btn btn-sub" id="btnCancelPart" type="button">✖ 다시 그릴래요</button>
+    </div>
+
+    <ul class="parts" id="parts" aria-label="움직이는 부분 목록"></ul>
+
+    <div class="opt">
+      <span class="label">그림 전체는?</span>
+      <div class="seg" id="segWhole">
+        <button type="button" data-v="none" aria-pressed="true">가만히</button>
+        <button type="button" data-v="float" aria-pressed="false">☁️ 둥실둥실</button>
+        <button type="button" data-v="tilt" aria-pressed="false">🛶 살랑살랑</button>
+        <button type="button" data-v="go" aria-pressed="false">🚀 앞으로 쭉</button>
+      </div>
+    </div>
+    <div class="opt">
+      <span class="label">빠르기</span>
+      <div class="seg" id="segSpeed">
+        <button type="button" data-v="3" aria-pressed="false">🐢 천천히</button>
+        <button type="button" data-v="2" aria-pressed="true">🐇 보통</button>
+        <button type="button" data-v="1.3" aria-pressed="false">⚡ 빠르게</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ③ 소개 -->
+  <section class="step locked" id="step3">
+    <h2><span class="num">3</span>내 발명품 소개하기</h2>
+    <div class="field">
+      <label class="lbl" for="name">발명품 이름</label>
+      <input id="name" type="text" maxlength="30" placeholder="예) 날아가는 프로펠러 자전거">
+    </div>
+    <div class="field">
+      <label class="lbl" for="desc">어떤 발명품인가요? (안 써도 돼요)</label>
+      <textarea id="desc" maxlength="200" placeholder="예) 프로펠러가 돌면 하늘을 날 수 있어서 길이 막혀도 학교에 늦지 않아요."></textarea>
+    </div>
+  </section>
+
+  <!-- ④ 만들기 -->
+  <section class="step locked" id="step4">
+    <h2><span class="num">4</span>움직이는 그림 만들기</h2>
+    <button class="btn btn-main big" id="btnMake" type="button" disabled>🎬 움직이는 그림 만들기</button>
+    <div class="bar" id="bar" hidden><i id="barFill"></i></div>
+    <p class="hint" id="makeHint">움직일 부분을 하나 이상 골라 주세요.</p>
+  </section>
+
+  <!-- 결과 -->
+  <section class="step result" id="result" hidden>
+    <p class="result-title" id="resultTitle">짜잔!</p>
+    <img id="gif" alt="움직이는 내 발명품 그림">
+    <p class="result-desc" id="resultDesc"></p>
+    <div class="row">
+      <a class="btn btn-main" id="btnSave" download="내-발명품.gif">💾 그림 저장</a>
+      <button class="btn btn-sub" id="btnEdit" type="button">✏️ 더 꾸미기</button>
+      <button class="btn btn-sub" id="btnRestart" type="button">📷 새 그림</button>
+    </div>
+    <p class="hint">저장이 안 되면 그림을 꾹 눌러서 "이미지 저장"을 골라요.</p>
+  </section>
+
+</div>
+
+<script>
+(() => {
+"use strict";
+const $ = id => document.getElementById(id);
+const view = $("view"), vctx = view.getContext("2d");
+
+const MOVES = {
+  spin:   { label:"빙글빙글",   color:"#2f6fd6" },
+  wobble: { label:"흔들흔들",   color:"#16a085" },
+  flicker:{ label:"활활 반짝",  color:"#d9473a" },
+  bob:    { label:"위아래로",   color:"#8e44ad" },
+  shake:  { label:"왔다갔다",   color:"#e67e22" },
+  pulse:  { label:"쿵쿵 커졌다", color:"#c2185b" }
+};
+
+const S = {
+  img:null, W:0, H:0, paper:"#ffffff",
+  base:null,          // 원래 그림
+  bg:null,            // 움직이는 부분 자리를 종이색으로 메운 그림
+  parts:[],           // {path, cx, cy, move, canvas}
+  pending:null,       // 방금 그린 동그라미
+  drawing:null,
+  whole:"none", dur:2,
+  t0:performance.now(), raf:0
+};
+
+/* ---------- ① 사진 ---------- */
+$("btnCamera").onclick = () => $("camera").click();
+$("btnAlbum").onclick  = () => $("album").click();
+$("camera").onchange = e => loadPhoto(e.target.files[0]);
+$("album").onchange  = e => loadPhoto(e.target.files[0]);
+
+function loadPhoto(file){
+  if (!file) return;
+  const img = new Image();
+  img.onload = () => setupImage(img);
+  img.onerror = () => { $("makeHint").textContent = "사진을 열 수 없었어요. 다시 찍어 볼까요?"; };
+  img.src = URL.createObjectURL(file);
+}
+
+function setupImage(img){
+  const MAX = 640;
+  const s = Math.min(1, MAX / Math.max(img.naturalWidth, img.naturalHeight));
+  S.W = Math.round(img.naturalWidth * s); S.H = Math.round(img.naturalHeight * s);
+  S.base = makeCanvas(S.W, S.H);
+  S.base.getContext("2d").drawImage(img, 0, 0, S.W, S.H);
+  S.paper = guessPaper(S.base);
+  S.est = estimatePaper(S.base);
+  S.est = localPaper(S.base, S.est);
+  S.est = localPaper(S.base, S.est);
+  S.parts = []; S.pending = null;
+  view.width = S.W; view.height = S.H;
+  view.hidden = false; $("stageEmpty").hidden = true; $("tip").hidden = false;
+  ["step2","step3","step4"].forEach(id => $(id).classList.remove("locked"));
+  $("result").hidden = true;
+  rebuildBg(); renderParts(); updateMake();
+  $("step2").scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+function makeCanvas(w,h){ const c = document.createElement("canvas"); c.width = w; c.height = h; return c; }
+
+/* 종이 색 = 그림 가장자리 색의 중간값 */
+function guessPaper(c){
+  const g = c.getContext("2d"), {width:w, height:h} = c;
+  const d = g.getImageData(0,0,w,h).data, rs=[], gs=[], bs=[];
+  const take = (x,y) => { const i = (y*w + x)*4; rs.push(d[i]); gs.push(d[i+1]); bs.push(d[i+2]); };
+  for (let x=0; x<w; x+=4){ take(x,2); take(x,h-3); }
+  for (let y=0; y<h; y+=4){ take(2,y); take(w-3,y); }
+  const med = a => a.sort((p,q)=>p-q)[a.length>>1];
+  return `rgb(${med(rs)},${med(gs)},${med(bs)})`;
+}
+
+/* 자리마다 종이 색 추정 (사진의 그림자·밝기 차이까지) */
+function estimatePaper(c){
+  const {width:w, height:h} = c, d = c.getContext("2d").getImageData(0,0,w,h).data;
+  const cell = Math.max(24, Math.round(Math.max(w,h) / 10));
+  const gw = Math.ceil(w / cell), gh = Math.ceil(h / cell);
+  const pm = S.paper.match(/\d+/g).map(Number), pl = (pm[0]+pm[1]+pm[2]) / 3;
+  const est = new Float32Array(gw*gh*3), ok = new Uint8Array(gw*gh);
+  for (let gy=0; gy<gh; gy++) for (let gx=0; gx<gw; gx++){
+    const px = [];
+    for (let y=gy*cell; y<Math.min(h,(gy+1)*cell); y+=2) for (let x=gx*cell; x<Math.min(w,(gx+1)*cell); x+=2){
+      const i = (y*w+x)*4; px.push([d[i]+d[i+1]+d[i+2], d[i], d[i+1], d[i+2]]);
+    }
+    px.sort((a,b) => b[0]-a[0]);
+    // 가장 밝은 반쪽 중에서 반짝이는 맨 위 10%는 빼고 평균 → 실제 종이 밝기
+    const a0 = Math.floor(px.length * 0.10), a1 = Math.max(a0 + 1, Math.floor(px.length * 0.55));
+    const top = px.slice(a0, a1);
+    let r=0,g=0,b=0; for (const p of top){ r+=p[1]; g+=p[2]; b+=p[3]; }
+    r/=top.length; g/=top.length; b/=top.length;
+    const mx = Math.max(r,g,b), mn = Math.min(r,g,b), sat = mx ? (mx-mn)/mx : 0;
+    const k = (gy*gw+gx)*3; est[k]=r; est[k+1]=g; est[k+2]=b;
+    ok[gy*gw+gx] = (sat < 0.18 && (r+g+b)/3 > pl - 45) ? 1 : 0;
+  }
+  // 크레용으로 꽉 칠한 칸은 이웃 종이 칸으로 채우기
+  for (let pass=0; pass<4; pass++) for (let gy=0; gy<gh; gy++) for (let gx=0; gx<gw; gx++){
+    if (ok[gy*gw+gx]) continue;
+    let r=0,g=0,b=0,n=0;
+    for (let dy=-1; dy<=1; dy++) for (let dx=-1; dx<=1; dx++){
+      const x=gx+dx, y=gy+dy; if (x<0||y<0||x>=gw||y>=gh||!ok[y*gw+x]) continue;
+      const k=(y*gw+x)*3; r+=est[k]; g+=est[k+1]; b+=est[k+2]; n++;
+    }
+    const k=(gy*gw+gx)*3;
+    if (n){ est[k]=r/n; est[k+1]=g/n; est[k+2]=b/n; ok[gy*gw+gx]=2; }
+    else if (pass===3){ est[k]=pm[0]; est[k+1]=pm[1]; est[k+2]=pm[2]; }
+  }
+  const small = makeCanvas(gw, gh), sg = small.getContext("2d"), sd = sg.createImageData(gw, gh);
+  for (let i=0; i<gw*gh; i++){ sd.data[i*4]=est[i*3]; sd.data[i*4+1]=est[i*3+1]; sd.data[i*4+2]=est[i*3+2]; sd.data[i*4+3]=255; }
+  sg.putImageData(sd, 0, 0);
+  const out = makeCanvas(w, h), og = out.getContext("2d");
+  og.imageSmoothingEnabled = true; og.imageSmoothingQuality = "high";
+  og.drawImage(small, 0, 0, w, h);   // 부드럽게 펼치기
+  return out;
+}
+
+/* 선을 지운 종이만 남겨 흐리게 펼치기 → 바로 주변의 그림자까지 닮은 종이색 */
+function localPaper(base, est){
+  const {width:w, height:h} = base;
+  const po = makeCanvas(w, h), pg = po.getContext("2d");
+  pg.drawImage(base, 0, 0);
+  const im = pg.getImageData(0,0,w,h), d = im.data, e = est.getContext("2d").getImageData(0,0,w,h).data;
+  for (let i=0; i<d.length; i+=4){
+    // 선(크레용·연필)은 투명하게 빼서 평균에 들어가지 않게
+    if (Math.hypot(d[i]-e[i], d[i+1]-e[i+1], d[i+2]-e[i+2]) > 26) d[i+3] = 0;
+  }
+  pg.putImageData(im, 0, 0);
+  // 단계적으로 줄였다가 다시 키우면 부드럽게 번져요 (모든 태블릿에서 동작)
+  let cur = po, cw = w, ch = h;
+  const target = Math.max(8, Math.round(Math.max(w,h) / 24));
+  while (Math.max(cw,ch) / 2 >= target){
+    cw = Math.max(1, Math.round(cw/2)); ch = Math.max(1, Math.round(ch/2));
+    const n = makeCanvas(cw, ch), ng = n.getContext("2d");
+    ng.imageSmoothingEnabled = true; ng.imageSmoothingQuality = "high";
+    ng.drawImage(cur, 0, 0, cw, ch); cur = n;
+  }
+  // 가장 작은 단계에서 아직 빈 칸은 이웃 칸으로 메우고, 모두 불투명하게
+  {
+    const sg = cur.getContext("2d"), sd = sg.getImageData(0,0,cw,ch), q = sd.data;
+    for (let pass=0; pass<cw+ch; pass++){
+      let holes = 0;
+      for (let y=0; y<ch; y++) for (let x=0; x<cw; x++){
+        const i = (y*cw+x)*4; if (q[i+3] >= 40) continue;
+        let r=0,g=0,b=0,n=0;
+        for (const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+          const X=x+dx, Y=y+dy; if (X<0||Y<0||X>=cw||Y>=ch) continue;
+          const j=(Y*cw+X)*4; if (q[j+3] < 40) continue;
+          r+=q[j]; g+=q[j+1]; b+=q[j+2]; n++;
+        }
+        if (n){ q[i]=r/n; q[i+1]=g/n; q[i+2]=b/n; q[i+3]=41; } else holes++;
+      }
+      if (!holes) break;
+    }
+    for (let i=0; i<q.length; i+=4){
+      if (q[i+3] < 40){ q[i]=e[0]; q[i+1]=e[1]; q[i+2]=e[2]; }
+      q[i+3] = 255;
+    }
+    sg.putImageData(sd, 0, 0);
+  }
+  while (cw < w || ch < h){
+    cw = Math.min(w, cw*2); ch = Math.min(h, ch*2);
+    const n = makeCanvas(cw, ch), ng = n.getContext("2d");
+    ng.imageSmoothingEnabled = true; ng.imageSmoothingQuality = "high";
+    ng.drawImage(cur, 0, 0, cw, ch); cur = n;
+  }
+  if (cur.width !== w || cur.height !== h){
+    const n = makeCanvas(w, h); n.getContext("2d").drawImage(cur, 0, 0, w, h); cur = n;
+  }
+  return cur;
+}
+
+/* ---------- ② 손가락으로 둘러 그리기 ---------- */
+function toCanvas(e){
+  const r = view.getBoundingClientRect();
+  return [ (e.clientX - r.left) * S.W / r.width, (e.clientY - r.top) * S.H / r.height ];
+}
+view.addEventListener("pointerdown", e => {
+  if (!S.base || S.pending) return;
+  e.preventDefault();
+  view.setPointerCapture(e.pointerId);
+  S.drawing = [toCanvas(e)];
+  $("tip").hidden = true;
+});
+view.addEventListener("pointermove", e => {
+  if (!S.drawing) return;
+  const p = toCanvas(e), last = S.drawing[S.drawing.length-1];
+  if (Math.hypot(p[0]-last[0], p[1]-last[1]) > 2) S.drawing.push(p);
+});
+const endDraw = () => {
+  if (!S.drawing) return;
+  const path = S.drawing; S.drawing = null;
+  const xs = path.map(p=>p[0]), ys = path.map(p=>p[1]);
+  const w = Math.max(...xs) - Math.min(...xs), h = Math.max(...ys) - Math.min(...ys);
+  if (path.length < 6 || w < 12 || h < 12) return;   // 너무 작으면 무시
+  S.pending = { path };
+  $("picker").hidden = false;
+  $("picker").scrollIntoView({behavior:"smooth", block:"nearest"});
+};
+view.addEventListener("pointerup", endDraw);
+view.addEventListener("pointercancel", () => { S.drawing = null; });
+
+$("moves").addEventListener("click", e => {
+  const b = e.target.closest(".move"); if (!b || !S.pending) return;
+  addPart(S.pending.path, b.dataset.move);
+  S.pending = null; $("picker").hidden = true;
+});
+$("btnCancelPart").onclick = () => { S.pending = null; $("picker").hidden = true; };
+
+function tracePath(g, path){
+  g.beginPath(); g.moveTo(path[0][0], path[0][1]);
+  for (let i=1; i<path.length; i++) g.lineTo(path[i][0], path[i][1]);
+  g.closePath();
+}
+
+function addPart(path, move){
+  // 무게 중심 (돌아가는 중심)
+  let a=0, cx=0, cy=0;
+  for (let i=0; i<path.length; i++){
+    const [x0,y0] = path[i], [x1,y1] = path[(i+1)%path.length];
+    const f = x0*y1 - x1*y0; a += f; cx += (x0+x1)*f; cy += (y0+y1)*f;
+  }
+  if (Math.abs(a) < 1e-6){ cx = path.reduce((s,p)=>s+p[0],0)/path.length; cy = path.reduce((s,p)=>s+p[1],0)/path.length; }
+  else { a *= 0.5; cx /= (6*a); cy /= (6*a); }
+  const c = makeCanvas(S.W, S.H), g = c.getContext("2d", { willReadFrequently:true });
+  g.save(); tracePath(g, path); g.clip(); g.drawImage(S.base, 0, 0); g.restore();
+  // 종이 부분은 투명하게 → 크레용 선만 움직여요
+  const xs = path.map(p=>p[0]), ys = path.map(p=>p[1]);
+  const x0 = Math.max(0, Math.floor(Math.min(...xs))), y0 = Math.max(0, Math.floor(Math.min(...ys)));
+  const x1 = Math.min(S.W, Math.ceil(Math.max(...xs))), y1 = Math.min(S.H, Math.ceil(Math.max(...ys)));
+  if (x1 > x0 && y1 > y0){
+    const im = g.getImageData(x0, y0, x1-x0, y1-y0), d = im.data;
+    const e = S.est.getContext("2d").getImageData(x0, y0, x1-x0, y1-y0).data;
+    for (let i=0; i<d.length; i+=4){
+      if (!d[i+3]) continue;
+      const dist = Math.hypot(d[i]-e[i], d[i+1]-e[i+1], d[i+2]-e[i+2]);
+      const a = Math.max(0, Math.min(1, (dist - 18) / 30));
+      d[i+3] = Math.round(d[i+3] * a);
+    }
+    g.putImageData(im, x0, y0);
+  }
+  S.parts.push({ path, cx, cy, move, canvas:c });
+  rebuildBg(); renderParts(); updateMake();
+}
+
+function rebuildBg(){
+  S.bg = makeCanvas(S.W, S.H);
+  const g = S.bg.getContext("2d");
+  g.drawImage(S.base, 0, 0);
+  const pat = g.createPattern(S.est, "no-repeat");   // 빈자리는 그 자리의 종이색으로
+  g.fillStyle = pat; g.strokeStyle = pat; g.lineWidth = 5; g.lineJoin = "round";
+  for (const p of S.parts){ tracePath(g, p.path); g.fill(); g.stroke(); }
+}
+
+function renderParts(){
+  const ul = $("parts"); ul.textContent = "";
+  S.parts.forEach((p, i) => {
+    const li = document.createElement("li");
+    const dot = document.createElement("span"); dot.className = "dot"; dot.style.background = MOVES[p.move].color;
+    const what = document.createElement("span"); what.className = "what"; what.textContent = `${i+1}번 부분 · ${MOVES[p.move].label}`;
+    const del = document.createElement("button"); del.type = "button"; del.textContent = "🗑️"; del.setAttribute("aria-label", `${i+1}번 부분 지우기`);
+    del.onclick = () => { S.parts.splice(i,1); rebuildBg(); renderParts(); updateMake(); };
+    li.append(dot, what, del); ul.append(li);
+  });
+}
+
+function updateMake(){
+  const ok = S.base && (S.parts.length > 0 || S.whole !== "none");
+  $("btnMake").disabled = !ok;
+  $("makeHint").textContent = ok ? "준비 완료! 버튼을 누르면 몇 초 만에 만들어져요." : "움직일 부분을 하나 이상 골라 주세요.";
+}
+
+function bindSeg(id, key, conv){
+  $(id).addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    [...$(id).children].forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+    S[key] = conv(b.dataset.v); updateMake();
+  });
+}
+bindSeg("segWhole", "whole", v => v);
+bindSeg("segSpeed", "dur", v => parseFloat(v));
+
+/* ---------- 움직임 계산 (t: 0~1, 한 바퀴가 끝나면 처음과 똑같아서 끊김 없이 반복) ---------- */
+const TAU = Math.PI * 2;
+function partTransform(g, p, t){
+  const P = TAU * t, U = Math.max(S.W, S.H);
+  let rot = 0, sc = 1, tx = 0, ty = 0, alpha = 1;
+  switch (p.move){
+    case "spin":    rot = TAU * 2 * t; break;
+    case "wobble":  rot = 0.32 * Math.sin(P * 2); break;
+    case "flicker": sc = 1 + 0.16 * Math.sin(P * 6); tx = 0.006*U*Math.sin(P*10); alpha = 0.78 + 0.22 * Math.sin(P * 4); break;
+    case "bob":     ty = -0.04 * U * Math.sin(P * 2); break;
+    case "shake":   tx = 0.035 * U * Math.sin(P * 2); break;
+    case "pulse":   sc = 1 + 0.16 * Math.abs(Math.sin(P * 2)); break;
+  }
+  g.globalAlpha = alpha;
+  g.translate(p.cx + tx, p.cy + ty);
+  g.rotate(rot); g.scale(sc, sc);
+  g.translate(-p.cx, -p.cy);
+}
+function wholeTransform(g, t){
+  const P = TAU * t, U = Math.max(S.W, S.H);
+  if (S.whole !== "none"){   // 살짝 확대해서 가장자리 빈틈이 안 보이게
+    g.translate(S.W/2, S.H/2); g.scale(1.08, 1.08); g.translate(-S.W/2, -S.H/2);
+  }
+  switch (S.whole){
+    case "float": g.translate(0, -0.025 * U * Math.sin(P)); break;
+    case "tilt":  g.translate(S.W/2, S.H/2); g.rotate(0.035 * Math.sin(P)); g.translate(-S.W/2, -S.H/2); break;
+    case "go":    g.translate(0.03 * U * Math.sin(P), -0.02 * U * Math.sin(P * 2)); break;
+  }
+}
+function drawFrame(g, t, scale){
+  g.save();
+  g.setTransform(scale,0,0,scale,0,0);
+  g.fillStyle = S.paper; g.fillRect(0, 0, S.W, S.H);
+  wholeTransform(g, t);
+  g.drawImage(S.bg, 0, 0);
+  for (const p of S.parts){ g.save(); partTransform(g, p, t); g.drawImage(p.canvas, 0, 0); g.restore(); }
+  g.restore();
+}
+
+/* ---------- 미리 보기 ---------- */
+function loop(now){
+  S.raf = requestAnimationFrame(loop);
+  if (!S.base || document.hidden) return;
+  if (S.drawing || S.pending){
+    vctx.setTransform(1,0,0,1,0,0);
+    vctx.drawImage(S.bg, 0, 0);
+    for (const p of S.parts) vctx.drawImage(p.canvas, 0, 0);
+    const path = S.drawing || S.pending.path;
+    if (path.length > 1){
+      vctx.save();
+      vctx.lineWidth = Math.max(3, S.W/160); vctx.lineJoin = "round"; vctx.lineCap = "round";
+      vctx.setLineDash([10, 8]); vctx.strokeStyle = "#f2b62b";
+      vctx.beginPath(); vctx.moveTo(path[0][0], path[0][1]);
+      for (let i=1; i<path.length; i++) vctx.lineTo(path[i][0], path[i][1]);
+      if (S.pending) vctx.closePath();
+      vctx.stroke();
+      if (S.pending){ vctx.fillStyle = "rgba(242,182,43,.18)"; vctx.fill(); }
+      vctx.restore();
+    }
+    return;
+  }
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const t = reduce ? 0 : ((now - S.t0) / 1000 / S.dur) % 1;
+  drawFrame(vctx, t, 1);
+}
+S.raf = requestAnimationFrame(loop);
+
+/* ---------- ④ GIF 만들기 ---------- */
+$("btnMake").onclick = makeGif;
+async function makeGif(){
+  const btn = $("btnMake"); btn.disabled = true;
+  $("bar").hidden = false; setBar(0);
+  $("makeHint").textContent = "움직이는 그림을 만드는 중이에요…";
+  try{
+    const OUT = 480;
+    const scale = Math.min(1, OUT / Math.max(S.W, S.H));
+    const w = Math.round(S.W * scale), h = Math.round(S.H * scale);
+    const fps = 15, n = Math.round(S.dur * fps), delay = Math.round(100 / fps);
+    const c = makeCanvas(w, h), g = c.getContext("2d", { willReadFrequently:true });
+    const frames = [];
+    for (let i=0; i<n; i++){
+      drawFrame(g, i / n, scale);
+      frames.push(g.getImageData(0, 0, w, h).data);
+      if (i % 4 === 0){ setBar(40 * i / n); await tick(); }
+    }
+    const palette = buildPalette(frames);
+    setBar(50); await tick();
+    const mapper = makeMapper(palette);
+    const indexed = [];
+    for (let i=0; i<n; i++){
+      indexed.push(mapper(frames[i]));
+      if (i % 3 === 0){ setBar(50 + 40 * i / n); await tick(); }
+    }
+    const bytes = encodeGif(indexed, w, h, palette, delay);
+    setBar(100);
+    showResult(new Blob([bytes], { type:"image/gif" }));
+  }catch(err){
+    $("makeHint").textContent = "만들다가 문제가 생겼어요. 한 번 더 눌러 볼까요?";
+    console.error(err);
+  }finally{
+    btn.disabled = false; $("bar").hidden = true;
+  }
+}
+const tick = () => new Promise(r => setTimeout(r, 0));
+function setBar(p){ $("barFill").style.width = p + "%"; }
+
+let lastUrl = null;
+function showResult(blob){
+  if (lastUrl) URL.revokeObjectURL(lastUrl);
+  lastUrl = URL.createObjectURL(blob);
+  $("gif").src = lastUrl; $("btnSave").href = lastUrl;
+  const name = $("name").value.trim();
+  $("btnSave").download = (name ? name.replace(/[\\/:*?"<>|]/g, "") : "내-발명품") + ".gif";
+  $("resultTitle").textContent = name ? `짜잔! ${name}` : "짜잔! 내 발명품";
+  $("resultDesc").textContent = $("desc").value.trim();
+  $("result").hidden = false;
+  $("makeHint").textContent = "다 됐어요! 아래에서 확인해요.";
+  $("result").scrollIntoView({ behavior:"smooth", block:"start" });
+}
+$("btnEdit").onclick = () => $("step2").scrollIntoView({ behavior:"smooth", block:"start" });
+$("btnRestart").onclick = () => {
+  S.base = null; S.parts = []; S.pending = null;
+  view.hidden = true; $("stageEmpty").hidden = false; $("tip").hidden = true; $("picker").hidden = true;
+  ["step2","step3","step4"].forEach(id => $(id).classList.add("locked"));
+  $("parts").textContent = ""; $("name").value = ""; $("desc").value = "";
+  $("camera").value = ""; $("album").value = "";
+  $("result").hidden = true; updateMake();
+  window.scrollTo({ top:0, behavior:"smooth" });
+};
+
+/* ---------- 색 줄이기 (중간값 자르기, 모든 장면에 같은 색표를 써서 깜빡임 없음) ---------- */
+function buildPalette(frames){
+  const pick = Math.max(1, Math.floor(frames.length / 6));
+  const px = [];
+  for (let f=0; f<frames.length; f+=pick){
+    const d = frames[f];
+    for (let i=0; i<d.length; i+=4*7) px.push((d[i]<<16) | (d[i+1]<<8) | d[i+2]);
+  }
+  let boxes = [px];
+  while (boxes.length < 256){
+    let bi = -1, best = -1, bch = 0;
+    for (let b=0; b<boxes.length; b++){
+      const box = boxes[b]; if (box.length < 2) continue;
+      let mn=[255,255,255], mx=[0,0,0];
+      for (const v of box){ const c=[v>>16&255, v>>8&255, v&255]; for (let k=0;k<3;k++){ if(c[k]<mn[k])mn[k]=c[k]; if(c[k]>mx[k])mx[k]=c[k]; } }
+      for (let k=0;k<3;k++){ const score = (mx[k]-mn[k]) * Math.sqrt(box.length); if (score > best){ best = score; bi = b; bch = k; } }
+    }
+    if (bi < 0 || best <= 0) break;
+    const sh = 16 - bch*8;
+    const box = boxes[bi].sort((p,q) => (p>>sh&255) - (q>>sh&255));
+    const mid = box.length >> 1;
+    boxes.splice(bi, 1, box.slice(0, mid), box.slice(mid));
+  }
+  const pal = new Uint8Array(256*3);
+  boxes.forEach((box, i) => {
+    let r=0,g=0,b=0; for (const v of box){ r+=v>>16&255; g+=v>>8&255; b+=v&255; }
+    const n = box.length || 1; pal[i*3]=Math.round(r/n); pal[i*3+1]=Math.round(g/n); pal[i*3+2]=Math.round(b/n);
+  });
+  pal.count = boxes.length;
+  return pal;
+}
+function makeMapper(pal){
+  const cache = new Int16Array(32768).fill(-1), n = pal.count;
+  return data => {
+    const out = new Uint8Array(data.length / 4);
+    for (let i=0, j=0; i<data.length; i+=4, j++){
+      const key = (data[i]>>3)<<10 | (data[i+1]>>3)<<5 | (data[i+2]>>3);
+      let idx = cache[key];
+      if (idx < 0){
+        const r = data[i], g = data[i+1], b = data[i+2];
+        let best = 1e9;
+        for (let k=0; k<n; k++){
+          const dr = r-pal[k*3], dg = g-pal[k*3+1], db = b-pal[k*3+2];
+          const d = dr*dr*2 + dg*dg*4 + db*db*3;
+          if (d < best){ best = d; idx = k; }
+        }
+        cache[key] = idx;
+      }
+      out[j] = idx;
+    }
+    return out;
+  };
+}
+
+/* ---------- GIF 파일 만들기 ---------- */
+function encodeGif(frames, w, h, pal, delay){
+  const out = [];
+  const u16 = v => out.push(v & 255, (v >> 8) & 255);
+  const str = s => { for (const ch of s) out.push(ch.charCodeAt(0)); };
+  str("GIF89a"); u16(w); u16(h); out.push(0xF7, 0, 0);
+  for (let i=0; i<768; i++) out.push(pal[i]);
+  out.push(0x21, 0xFF, 0x0B); str("NETSCAPE2.0"); out.push(3, 1, 0, 0, 0);   // 계속 반복
+  for (const f of frames){
+    out.push(0x21, 0xF9, 4, 0); u16(delay); out.push(0, 0);
+    out.push(0x2C); u16(0); u16(0); u16(w); u16(h); out.push(0);
+    out.push(8);
+    const data = lzw(f);
+    for (let i=0; i<data.length; i+=255){
+      const len = Math.min(255, data.length - i);
+      out.push(len); for (let k=0; k<len; k++) out.push(data[i+k]);
+    }
+    out.push(0);
+  }
+  out.push(0x3B);
+  return new Uint8Array(out);
+}
+function lzw(idx){
+  const CLEAR = 256, EOI = 257;
+  let size = 9, next = 258, dict = new Map(), cur = 0, bits = 0;
+  const out = [];
+  const emit = c => { cur |= c << bits; bits += size; while (bits >= 8){ out.push(cur & 255); cur >>>= 8; bits -= 8; } };
+  emit(CLEAR);
+  let prefix = idx[0];
+  for (let i=1; i<idx.length; i++){
+    const k = idx[i], key = prefix * 256 + k, v = dict.get(key);
+    if (v !== undefined){ prefix = v; continue; }
+    emit(prefix);
+    if (next < 4095){ dict.set(key, next++); if (next > (1 << size) && size < 12) size++; }
+    else { emit(CLEAR); dict.clear(); next = 258; size = 9; }
+    prefix = k;
+  }
+  emit(prefix); emit(EOI);
+  if (bits > 0) out.push(cur & 255);
+  return out;
+}
+
+window.__S = S;  // 시험용
+})();
+</script>
+</body>
+</html>
